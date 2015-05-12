@@ -30,41 +30,98 @@
  * per non dover ricorrere all'iterazione dei suoi archi per trovare (di nuovo) l'arco 
  * che lega il nodo al nodo precedente
  * 
+ * COMPLETATO
  * 
  */
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
+import java.io.*;
 import java.util.*;
 
+/**
+ * 
+ * Classe Arco
+ * 
+ * Descrive le caratteristiche essenziali di ogni arco
+ *
+ */
+class Arco {
+	
+	String tipo;
+	int dst;
+	double w;
+	double c;
+	
+	Arco(String tipo, int dst,double w, double c){
+		this.tipo = tipo;this.w = w; this.dst = dst; this.c = c;
+	}
+}
+/**
+ * 
+ * Classe Nodo
+ * 
+ * questa classe permette l'utilizzo della struttura dati PriorityQueue
+ *
+ */
+class Nodo implements Comparable<Nodo>{
+	
+	int index;
+	int pred;
+	double weight;
+	double cost;
+	
+	Arco mainArc;
 
-public class Esercizio1 {
+	Nodo(int index){ this.index = index; }
+	
+	/*
+	 * Arraylist di archi apparteneti al nodo. 
+	 * Necessario lo scorrimento O(n) e l'inserimento O(1)
+	 */
+	ArrayList<Arco> archi = new ArrayList<>(); 
 
-	public static void main(String[] args) {
+	/*
+	 * Creo un arco che collega questo nodo al nodo "dst", di peso "w" e di costo "c"
+	 */
+	protected void addArc(String tipo, int dst, double w, double c){
 		
-		BufferedReader reader;
-		
-		int numeroNodi, numeroArchi;
-		double w,c;
-		
-		String tipo;
-		int src, dst;
-		
+		this.archi.add(new Arco(tipo,dst,w,c));
+	}
+
+	/*
+	 * Necessario per comparare i nodi all'interno della PriorityQueue
+	 * Nodo con peso minore viene messo all'inidice 0 ecc.
+	 */
+	public int compareTo(Nodo nodo)
+    {
+        return Double.compare(weight, nodo.weight);
+    }
+}
+
+class SoluzioneEsericizio1{
+	
+	BufferedReader reader;
+	
+	int numeroNodi, numeroArchi;
+	double w,c;
+	
+	String tipo;
+	int src, dst;
+	
+	Nodo[] grafo;
+	
+	SoluzioneEsericizio1(String nomeFile){
 		
 		try{
 			
 			//buffered* utilizzate per lettura file
-			reader = new BufferedReader(new FileReader(new File(args[0])));
+			reader = new BufferedReader(new FileReader(new File(nomeFile)));
 			
 			//n = numero nodi; m = numero archi
 			numeroNodi = Integer.parseInt(reader.readLine());
 			numeroArchi = Integer.parseInt(reader.readLine());
 			
 			//utilizzo un array di nodi come grafo
-			Nodo[] grafo = new Nodo[numeroNodi];
+			grafo = new Nodo[numeroNodi];
 			
 			//inizializzazione grafo con i vari n nodi O(n)
 			for(int i=0; i<numeroNodi; i++){
@@ -92,41 +149,6 @@ public class Esercizio1 {
 				
 				grafo[src].addArc(tipo, dst, w, c);
 			}
-			
-			/*
-			 * richiamo l'algoritmo di dijkstra solo per le strade normali
-			 * inoltre predispongo il percorso minimo per l'algoritmo printPath
-			 */
-			double lunghezza1 = dijkstraN(grafo);
-			
-			/*
-			 * algoritmo che mi ritorna l'output grafico in un arraylist
-			 */
-			ArrayList<String> result1 = printPath(grafo);
-			
-			for(int i=result1.size()-1; i>=0; i--){
-				
-				System.out.println(result1.get(i));
-			}
-			
-			System.out.println(lunghezza1);
-			
-			/*
-			 * richiamo l'algoritmo di dijkstra per tutti i tipi di strade
-			 * inoltre predispongo il percorso minimo per l'algoritmo printPath
-			 */
-			double lunghezza2 = dijkstraA(grafo);
-			
-			ArrayList<String> result2 = printPath(grafo);
-			
-			for(int i=result2.size()-1; i>=0; i--){
-				
-				System.out.println(result2.get(i));
-			}
-			
-			System.out.println(lunghezza2);
-			System.out.println(grafo[grafo.length-1].cost);
-			
 		}
 		
 		catch(IOException e){
@@ -134,7 +156,7 @@ public class Esercizio1 {
 			System.out.println(e);
 		}
 	}
-	
+
 	/**
 	 * Algoritmo di Dijkstra su un array di Nodi
 	 * 
@@ -154,7 +176,7 @@ public class Esercizio1 {
 	 * @param grafo array di oggetti Nodo
 	 * @return peso totale del cammino minimo con C=0
 	 */
-	private static double dijkstraN(Nodo[] grafo){
+	public double dijkstraN(){
 		
 		
 		//inizializzazione dei pesi e dei predecessori O(n)
@@ -219,11 +241,21 @@ public class Esercizio1 {
 				}
 			}
 		}
+		
+		//ulteriore pezzo di codice che serve per la scrittura del percorso
+		ArrayList<String> result1 = printPath(grafo);
+		
+		for(int i=result1.size()-1; i>=0; i--){
+			
+			System.out.println(result1.get(i));
+		}
 
 		return grafo[grafo.length-1].weight;
 	}
 
-	private static double dijkstraA(Nodo[] grafo){
+	public double[] dijkstraA(){
+		
+		double[] r = new double[2];
 		
 		for(int i=0; i<grafo.length; i++){
 			
@@ -264,18 +296,27 @@ public class Esercizio1 {
 				}
 			}
 		}
+		
+		ArrayList<String> result2 = printPath(grafo);
+		
+		for(int i=result2.size()-1; i>=0; i--){
+			
+			System.out.println(result2.get(i));
+		}
+		
+		r[0] = grafo[grafo.length-1].weight;
+		r[1] = grafo[grafo.length-1].cost;
 
-		return grafo[grafo.length-1].weight;
+		return r;
 	}
 
-	
 	/*
 	 * Metodo che accetta un grafo in forma di array di oggetti Nodo
 	 * ritornando l'output in String di un arraylist in fomato:
 	 * 
 	 * tipo src dst
 	 */
-	private static ArrayList<String> printPath(Nodo[] grafo){
+	private ArrayList<String> printPath(Nodo[] grafo){
 		
 		ArrayList<String> result = new ArrayList<>();
 		
@@ -292,64 +333,23 @@ public class Esercizio1 {
 	}
 }
 
+public class Esercizio1 {
 
-/**
- * 
- * Classe Arco
- * 
- * Descrive le caratteristiche essenziali di ogni arco
- *
- */
-class Arco {
-	
-	String tipo;
-	int dst;
-	double w;
-	double c;
-	
-	Arco(String tipo, int dst,double w, double c){
-		this.tipo = tipo;this.w = w; this.dst = dst; this.c = c;
-	}
-}
-/**
- * 
- * Classe Nodo
- * 
- * questa classe permette l'utilizzo della struttura dati PriorityQueue
- *
- */
-class Nodo implements Comparable<Nodo>{
-	
-	int index;
-	int pred;
-	double weight;
-	double cost;
-	
-	Arco mainArc;
-
-	Nodo(int index){ this.index = index; }
-	
-	/*
-	 * Arraylist di archi apparteneti al nodo. 
-	 * Necessario lo scorrimento O(n) e l'inserimento O(1)
-	 */
-	ArrayList<Arco> archi = new ArrayList<>(); 
-
-	/*
-	 * Creo un arco che collega questo nodo al nodo "dst", di peso "w" e di costo "c"
-	 */
-	protected void addArc(String tipo, int dst, double w, double c){
+	public static void main(String[] args) {
 		
-		this.archi.add(new Arco(tipo,dst,w,c));
+		String nomeFile = args[0];
+
+		SoluzioneEsericizio1 soluzione = new SoluzioneEsericizio1(nomeFile);
+		
+		/*
+		 * richiamo l'algoritmo di dijkstra solo per le strade normali
+		 * inoltre predispongo il percorso minimo per l'algoritmo printPath
+		 */
+		System.out.println(soluzione.dijkstraN());
+		
+		double[] risultato = soluzione.dijkstraA();
+		
+		for(double r : risultato)
+			System.out.println(r);
 	}
-
-	/*
-	 * Necessario per comparare i nodi all'interno della PriorityQueue
-	 * Nodo con peso minore viene messo all'inidice 0 ecc.
-	 */
-	public int compareTo(Nodo nodo)
-    {
-        return Double.compare(weight, nodo.weight);
-    }
 }
-
