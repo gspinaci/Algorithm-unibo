@@ -8,19 +8,30 @@
  * 
  * REPORT:
  * 
- * DATA -> 12/05/15
+ * DATA -> 11/05/15
  * 
  * Completata la prima parte, con strade normali
  * 
  * Problema principale PriorityQueue 
  * Devo valutare se questo algoritmo di Dijkstra è effettivamente O(m log n)
  * 
+ * DATA -> 12/05/15
+ * 
+ * Completato l'esercizio
+ * 
+ * Per l'algoritmo di dijkstra ho utilizzato la struttura dati PriorityQueue di Java
+ * 
+ * Ho utilizzato il metodo poll() che rimuove l'elemento in testa, con un costo di O(1)
+ * Ogni inserimento con il metodo add() costa O(log n) perchè esegue il sorting dei nodi grazie al loro peso
+ * 
+ * Ho differenziato i due algoritmi di Dijkstra, il primo non accetta archi con costi > 0
+ * 
+ * Ho creato la classe Nodo con i vari paramentri
+ * per non dover ricorrere all'iterazione dei suoi archi per trovare (di nuovo) l'arco 
+ * che lega il nodo al nodo precedente
+ * 
  * 
  */
-
-
-
-package esercizi;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,7 +47,7 @@ public class Esercizio1 {
 		
 		BufferedReader reader;
 		
-		int n, m;
+		int numeroNodi, numeroArchi;
 		double w,c;
 		
 		String tipo;
@@ -46,29 +57,29 @@ public class Esercizio1 {
 		try{
 			
 			//buffered* utilizzate per lettura file
-			reader = new BufferedReader(new FileReader(new File("src/Esercizio1-1.in")));
+			reader = new BufferedReader(new FileReader(new File(args[0])));
 			
 			//n = numero nodi; m = numero archi
-			n = Integer.parseInt(reader.readLine());
-			m = Integer.parseInt(reader.readLine());
+			numeroNodi = Integer.parseInt(reader.readLine());
+			numeroArchi = Integer.parseInt(reader.readLine());
 			
 			//utilizzo un array di nodi come grafo
-			Nodo[] grafo = new Nodo[n];
+			Nodo[] grafo = new Nodo[numeroNodi];
 			
-			//inizializzazione grafo con i vari n nodi
-			for(int i=0; i<n; i++){
+			//inizializzazione grafo con i vari n nodi O(n)
+			for(int i=0; i<numeroNodi; i++){
 				
 				grafo[i] = new Nodo(i);
 			}
 			
-			//lettura e creazione archi 
-			for(int i=0; i<m; i++){
+			//lettura, creazione e inserimento nel grafo degli archi 
+			for(int i=0; i<numeroArchi; i++){
 				
 				String row = reader.readLine();
 				
 				String[] tmp = row.split("\\s+");
 				
-				tipo =  tmp[0];
+				tipo = tmp[0];
 				src = Integer.parseInt(tmp[1]);
 				dst = Integer.parseInt(tmp[2]);
 				
@@ -79,7 +90,6 @@ public class Esercizio1 {
 				else
 					c = 0;
 				
-				
 				grafo[src].addArc(tipo, dst, w, c);
 			}
 			
@@ -87,16 +97,36 @@ public class Esercizio1 {
 			 * richiamo l'algoritmo di dijkstra solo per le strade normali
 			 * inoltre predispongo il percorso minimo per l'algoritmo printPath
 			 */
-			double l = dijkstraN(grafo);
+			double lunghezza1 = dijkstraN(grafo);
 			
-			ArrayList<String> result = printPath(grafo);
+			/*
+			 * algoritmo che mi ritorna l'output grafico in un arraylist
+			 */
+			ArrayList<String> result1 = printPath(grafo);
 			
-			for(int i=result.size()-1; i>=0; i--){
+			for(int i=result1.size()-1; i>=0; i--){
 				
-				System.out.println("n "+result.get(i));
+				System.out.println(result1.get(i));
 			}
 			
-			System.out.println(l);
+			System.out.println(lunghezza1);
+			
+			/*
+			 * richiamo l'algoritmo di dijkstra per tutti i tipi di strade
+			 * inoltre predispongo il percorso minimo per l'algoritmo printPath
+			 */
+			double lunghezza2 = dijkstraA(grafo);
+			
+			ArrayList<String> result2 = printPath(grafo);
+			
+			for(int i=result2.size()-1; i>=0; i--){
+				
+				System.out.println(result2.get(i));
+			}
+			
+			System.out.println(lunghezza2);
+			System.out.println(grafo[grafo.length-1].cost);
+			
 		}
 		
 		catch(IOException e){
@@ -108,11 +138,18 @@ public class Esercizio1 {
 	/**
 	 * Algoritmo di Dijkstra su un array di Nodi
 	 * 
+	 * dijkstraN -> dijkstra solo su strade "n"
+	 * dijkstraA -> dijkstra con tutti i tipi di strade
+	 * 
 	 * Inizializzazione O(n)
 	 * Setto ogni peso a +Infinity, ogni predecessore a -1
 	 * 
 	 * Creo una PriorityQueue (MinHeap) che contenga i nodi,
-	 * non uso array di appoggio, ma solo variabili degli oggetti creati
+	 * 
+	 * poll() O(1)
+	 * add()  O(log n)
+	 * 
+	 * non uso array di appoggio, ma solo variabili negli oggetti creati
 	 * 
 	 * @param grafo array di oggetti Nodo
 	 * @return peso totale del cammino minimo con C=0
@@ -152,23 +189,32 @@ public class Esercizio1 {
 			
 			for( Arco arco : u.archi){
 				
-				/*
-				 * Essendo il primo caso, solo se il costo è nullo posso prendere in considerazione l'arco
-				 */
 				if( arco.c == 0 ){
 					
+					//caso in cui il nodo di destinazione dell'arco non è ancora stato scoperto
 					if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
 						
+						
+						/*
+						 * con queste istruzioni mi salvo:
+						 * 
+						 * peso totale dal nodo 0 al nodo corrente
+						 * nodo da cui parte, e l'arco minore per arrivare al nodo corrente
+						 * 
+						 */
 						grafo[arco.dst].weight = u.weight + arco.w;
 						grafo[arco.dst].pred = u.index;
+						grafo[arco.dst].mainArc = arco;
 						
 						Q.add(grafo[arco.dst]);
 					}
 					
+					//caso in cui si scopre un nuovo percorso minimo
 					else if( u.weight + arco.w < grafo[arco.dst].weight ){
 						
 						grafo[arco.dst].weight = u.weight + arco.w;
 						grafo[arco.dst].pred = u.index;
+						grafo[arco.dst].mainArc = arco;
 					}
 				}
 			}
@@ -177,10 +223,57 @@ public class Esercizio1 {
 		return grafo[grafo.length-1].weight;
 	}
 
-	/**
+	private static double dijkstraA(Nodo[] grafo){
+		
+		for(int i=0; i<grafo.length; i++){
+			
+			grafo[i].weight = Double.POSITIVE_INFINITY;
+			grafo[i].pred = -1;
+			
+		}
+		
+		grafo[0].weight = 0;
+		PriorityQueue<Nodo> Q = new PriorityQueue<>();
+		Q.add(grafo[0]);
+		
+		while( !Q.isEmpty() ){
+			
+			Nodo u = Q.poll();
+			
+			for( Arco arco : u.archi){
+				
+				if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
+					
+					grafo[arco.dst].weight = u.weight + arco.w;
+					grafo[arco.dst].pred = u.index;
+					grafo[arco.dst].mainArc = arco;
+					
+					//salvo la somma totale di costi dal nodo 0 al nodo corrente
+					grafo[arco.dst].cost = u.cost + arco.c;
+					
+					Q.add(grafo[arco.dst]);
+				}
+				
+				else if( u.weight + arco.w < grafo[arco.dst].weight ){
+					
+					grafo[arco.dst].weight = u.weight + arco.w;
+					grafo[arco.dst].pred = u.index;
+					grafo[arco.dst].mainArc = arco;
+					
+					grafo[arco.dst].cost = u.cost + arco.c;
+				}
+			}
+		}
+
+		return grafo[grafo.length-1].weight;
+	}
+
+	
+	/*
+	 * Metodo che accetta un grafo in forma di array di oggetti Nodo
+	 * ritornando l'output in String di un arraylist in fomato:
 	 * 
-	 * @param grafo array di oggetti Nodo
-	 * @return ArrayList<String> contenente nodo sorgente e nodo destinazione di ogni arco del cammino minimo
+	 * tipo src dst
 	 */
 	private static ArrayList<String> printPath(Nodo[] grafo){
 		
@@ -188,10 +281,9 @@ public class Esercizio1 {
 		
 		int currentIndex = grafo.length-1;
 		
-		
 		while(currentIndex != 0){
-			
-			result.add(grafo[currentIndex].pred+" "+currentIndex);
+						
+			result.add(grafo[currentIndex].mainArc.tipo+" "+grafo[currentIndex].pred+" "+currentIndex);
 			
 			currentIndex = grafo[currentIndex].pred;
 		}
@@ -218,11 +310,6 @@ class Arco {
 	Arco(String tipo, int dst,double w, double c){
 		this.tipo = tipo;this.w = w; this.dst = dst; this.c = c;
 	}
-	
-	public String toString(){
-		
-		return "["+w+","+dst+"]";
-	}
 }
 /**
  * 
@@ -236,7 +323,10 @@ class Nodo implements Comparable<Nodo>{
 	int index;
 	int pred;
 	double weight;
+	double cost;
 	
+	Arco mainArc;
+
 	Nodo(int index){ this.index = index; }
 	
 	/*
@@ -251,18 +341,6 @@ class Nodo implements Comparable<Nodo>{
 	protected void addArc(String tipo, int dst, double w, double c){
 		
 		this.archi.add(new Arco(tipo,dst,w,c));
-	}
-
-	public String toString(){
-		
-		String x = "";
-		
-		for(Arco arco : archi){
-			
-			x+= arco+";";
-		}
-		
-		return x;
 	}
 
 	/*
