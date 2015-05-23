@@ -52,7 +52,6 @@
  * aggiungo un quick-sort alla fine dell'array, eliminando l'ultimo elemento dell'array
  * 
  * 
- * Completato
  */
 
 import java.io.*;
@@ -117,7 +116,6 @@ class SoluzioneEsericizio4{
 		
 		try{
 			
-			//buffered* utilizzate per lettura file
 			reader = new BufferedReader(new FileReader(new File(nomeFile)));
 			
 			raggio = Double.parseDouble(reader.readLine());
@@ -135,7 +133,7 @@ class SoluzioneEsericizio4{
 			
 			/*
 			 * 
-			 * O(n^2) lettura di tutte le distanze
+			 * Θ( (N^2 - N)/2 ) lettura di tutte le distanze
 			 * 
 			 * LinkedList
 			 * O(1) inserimento
@@ -265,9 +263,6 @@ public class Esercizio4 {
 		
 		String nomeFile = args[0];
 		
-		SoluzioneEsericizio4 soluzione = new SoluzioneEsericizio4(nomeFile);
-		
-		soluzione.posizionaAntenne();
+		new SoluzioneEsericizio4(nomeFile).posizionaAntenne();
 	}
 }
-

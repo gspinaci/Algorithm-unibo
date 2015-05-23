@@ -21,7 +21,7 @@
  * 
  * Per l'algoritmo di dijkstra ho utilizzato la struttura dati PriorityQueue di Java
  * 
- * Ho utilizzato il metodo poll() che rimuove l'elemento in testa, con un costo di O(1)
+ * Ho utilizzato il metodo poll() che rimuove l'elemento in testa, con un costo di O(log n) perchè ribilancia 
  * Ogni inserimento con il metodo add() costa O(log n) perchè esegue il sorting dei nodi grazie al loro peso
  * 
  * Ho differenziato i due algoritmi di Dijkstra, il primo non accetta archi con costi > 0
@@ -32,9 +32,16 @@
  * 
  * COMPLETATO
  * 
+ * Data -> 23/05/15
+ * 
+ * Perfezionamento codice, ho creato un solo metodo, in base ad un booleano decide il tipo di algoritmo
+ * 
  */
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -91,6 +98,7 @@ class Nodo implements Comparable<Nodo>{
 	 * Necessario per comparare i nodi all'interno della PriorityQueue
 	 * Nodo con peso minore viene messo all'inidice 0 ecc.
 	 */
+	@Override
 	public int compareTo(Nodo nodo)
     {
         return Double.compare(weight, nodo.weight);
@@ -109,18 +117,16 @@ class SoluzioneEsericizio1{
 	
 	Nodo[] grafo;
 	
+	//prepara il grafo 
 	SoluzioneEsericizio1(String nomeFile){
 		
 		try{
 			
-			//buffered* utilizzate per lettura file
 			reader = new BufferedReader(new FileReader(new File(nomeFile)));
 			
-			//n = numero nodi; m = numero archi
 			numeroNodi = Integer.parseInt(reader.readLine());
 			numeroArchi = Integer.parseInt(reader.readLine());
 			
-			//utilizzo un array di nodi come grafo
 			grafo = new Nodo[numeroNodi];
 			
 			//inizializzazione grafo con i vari n nodi O(n)
@@ -130,6 +136,7 @@ class SoluzioneEsericizio1{
 			}
 			
 			//lettura, creazione e inserimento nel grafo degli archi 
+			//O(m)
 			for(int i=0; i<numeroArchi; i++){
 				
 				String row = reader.readLine();
@@ -142,7 +149,7 @@ class SoluzioneEsericizio1{
 				
 				w = Double.parseDouble(tmp[3]);
 				
-				if(tmp.length==5)
+				if(tmp.length == 5)
 					c = Double.parseDouble(tmp[4]);
 				else
 					c = 0;
@@ -160,23 +167,24 @@ class SoluzioneEsericizio1{
 	/**
 	 * Algoritmo di Dijkstra su un array di Nodi
 	 * 
-	 * dijkstraN -> dijkstra solo su strade "n"
-	 * dijkstraA -> dijkstra con tutti i tipi di strade
+	 * tipo true  -> dijkstra solo su strade "n"
+	 * tipo false -> dijkstra con tutti i tipi di strade
 	 * 
 	 * Inizializzazione O(n)
 	 * Setto ogni peso a +Infinity, ogni predecessore a -1
 	 * 
 	 * Creo una PriorityQueue (MinHeap) che contenga i nodi,
 	 * 
-	 * poll() O(1)
-	 * add()  O(log n)
+	 * Da Oracle.Docs
+	 *  this implementation provides O(log(n)) time for the enqueing and dequeing methods (offer, poll, remove() and add)
 	 * 
 	 * non uso array di appoggio, ma solo variabili negli oggetti creati
 	 * 
 	 * @param grafo array di oggetti Nodo
-	 * @return peso totale del cammino minimo con C=0
+	 * 
+	 * Genera l'output richiesto a console
 	 */
-	public double dijkstraN(){
+	public void dijkstra(boolean tipo){
 		
 		
 		//inizializzazione dei pesi e dei predecessori O(n)
@@ -211,7 +219,8 @@ class SoluzioneEsericizio1{
 			
 			for( Arco arco : u.archi){
 				
-				if( arco.c == 0 ){
+				//caso solo strade normali, quindi costo = 0
+				if(tipo && arco.c == 0){
 					
 					//caso in cui il nodo di destinazione dell'arco non è ancora stato scoperto
 					if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
@@ -239,77 +248,50 @@ class SoluzioneEsericizio1{
 						grafo[arco.dst].mainArc = arco;
 					}
 				}
+				
+				//caso tutte le strade
+				else if(!tipo){
+					
+					if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
+						
+						grafo[arco.dst].weight = u.weight + arco.w;
+						grafo[arco.dst].pred = u.index;
+						grafo[arco.dst].mainArc = arco;
+						
+						//salvo la somma totale di costi dal nodo 0 al nodo corrente
+						grafo[arco.dst].cost = u.cost + arco.c;
+						
+						Q.add(grafo[arco.dst]);
+					}
+					
+					else if( u.weight + arco.w < grafo[arco.dst].weight ){
+						
+						grafo[arco.dst].weight = u.weight + arco.w;
+						grafo[arco.dst].pred = u.index;
+						grafo[arco.dst].mainArc = arco;
+						
+						grafo[arco.dst].cost = u.cost + arco.c;
+					}
+				}
 			}
 		}
 		
-		//ulteriore pezzo di codice che serve per la scrittura del percorso
+		//scrittura output
+		
 		ArrayList<String> result1 = printPath(grafo);
 		
 		for(int i=result1.size()-1; i>=0; i--){
 			
 			System.out.println(result1.get(i));
 		}
+		
+		System.out.println(grafo[grafo.length-1].weight);
+		
+		if(!tipo)
+			System.out.println(grafo[grafo.length-1].cost);
 
-		return grafo[grafo.length-1].weight;
 	}
-
-	public double[] dijkstraA(){
-		
-		double[] r = new double[2];
-		
-		for(int i=0; i<grafo.length; i++){
-			
-			grafo[i].weight = Double.POSITIVE_INFINITY;
-			grafo[i].pred = -1;
-			
-		}
-		
-		grafo[0].weight = 0;
-		PriorityQueue<Nodo> Q = new PriorityQueue<>();
-		Q.add(grafo[0]);
-		
-		while( !Q.isEmpty() ){
-			
-			Nodo u = Q.poll();
-			
-			for( Arco arco : u.archi){
-				
-				if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
-					
-					grafo[arco.dst].weight = u.weight + arco.w;
-					grafo[arco.dst].pred = u.index;
-					grafo[arco.dst].mainArc = arco;
-					
-					//salvo la somma totale di costi dal nodo 0 al nodo corrente
-					grafo[arco.dst].cost = u.cost + arco.c;
-					
-					Q.add(grafo[arco.dst]);
-				}
-				
-				else if( u.weight + arco.w < grafo[arco.dst].weight ){
-					
-					grafo[arco.dst].weight = u.weight + arco.w;
-					grafo[arco.dst].pred = u.index;
-					grafo[arco.dst].mainArc = arco;
-					
-					grafo[arco.dst].cost = u.cost + arco.c;
-				}
-			}
-		}
-		
-		ArrayList<String> result2 = printPath(grafo);
-		
-		for(int i=result2.size()-1; i>=0; i--){
-			
-			System.out.println(result2.get(i));
-		}
-		
-		r[0] = grafo[grafo.length-1].weight;
-		r[1] = grafo[grafo.length-1].cost;
-
-		return r;
-	}
-
+	
 	/*
 	 * Metodo che accetta un grafo in forma di array di oggetti Nodo
 	 * ritornando l'output in String di un arraylist in fomato:
@@ -341,15 +323,10 @@ public class Esercizio1 {
 
 		SoluzioneEsericizio1 soluzione = new SoluzioneEsericizio1(nomeFile);
 		
-		/*
-		 * richiamo l'algoritmo di dijkstra solo per le strade normali
-		 * inoltre predispongo il percorso minimo per l'algoritmo printPath
-		 */
-		System.out.println(soluzione.dijkstraN());
+		//Solo strade N
+		soluzione.dijkstra(true);
 		
-		double[] risultato = soluzione.dijkstraA();
-		
-		for(double r : risultato)
-			System.out.println(r);
+		//Tutte le strade
+		soluzione.dijkstra(false);
 	}
 }

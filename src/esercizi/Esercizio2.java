@@ -57,18 +57,14 @@ class SoluzioneEsericizio2{
 	
 	SoluzioneEsericizio2(String nomeFile){
 		
-		//prevenzione FileNotFoundException
 		try{
 			
-			//buffered* utilizzate per lettura file
 			reader = new BufferedReader(new FileReader(new File(nomeFile)));
 			
-			//lettura file e settaggio variabili
 			penale = Double.parseDouble(reader.readLine());
 			numeroMesi = Integer.parseInt(reader.readLine());
 			numeroObbligazioni = Integer.parseInt(reader.readLine());
 			
-			//inizializzazione matrice contenente le obbligazioni divise per mese
 			R = new double[numeroMesi][numeroObbligazioni];
 			S = new double[numeroMesi][numeroObbligazioni];
 			X = new int[numeroMesi][numeroObbligazioni];
@@ -230,7 +226,7 @@ class SoluzioneEsericizio2{
 	 * O(m) 
 	 * 
 	 */
-	public int[] getPath(){
+	private int[] getPath(){
 		
 		int[] ris = new int[numeroMesi];
 		
@@ -251,8 +247,6 @@ public class Esercizio2 {
 		
 		String nomeFile = args[0];
 		
-		SoluzioneEsericizio2 soluzione = new SoluzioneEsericizio2(nomeFile);
-		
-		System.out.println(soluzione.getMaxBondValue());
+		System.out.println(new SoluzioneEsericizio2(nomeFile).getMaxBondValue());
 	}
 }
