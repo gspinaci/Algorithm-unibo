@@ -21,8 +21,9 @@
  * 
  * Per l'algoritmo di dijkstra ho utilizzato la struttura dati PriorityQueue di Java
  * 
- * Ho utilizzato il metodo poll() che rimuove l'elemento in testa, con un costo di O(log n) perchè ribilancia 
- * Ogni inserimento con il metodo add() costa O(log n) perchè esegue il sorting dei nodi grazie al loro peso
+ * Ho utilizzato il metodo poll() che rimuove l'elemento in testa, con un costo di O(log n) perchè ribilancia lo heap
+ * Ogni inserimento con il metodo add() costa O(log n) perchè esegue il sorting dei nodi grazie al loro peso.
+ * Vale lo stesso per il metodo remove()
  * 
  * Ho differenziato i due algoritmi di Dijkstra, il primo non accetta archi con costi > 0
  * 
@@ -34,14 +35,14 @@
  * 
  * Data -> 23/05/15
  * 
- * Perfezionamento codice, ho creato un solo metodo, in base ad un booleano decide il tipo di algoritmo
+ * Perfezionamento codice, ho creato un solo algoritmo di dijkstra, in base ad un booleano decide il tipo di algoritmo
  * 
+ * O(m log n)
+ * m-> numero archi
+ * log n-> dato dal metodo add() o il ribilanciamento dello heap
  */
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -54,12 +55,12 @@ import java.util.*;
 class Arco {
 	
 	String tipo;
-	int dst;
-	double w;
-	double c;
+	int nodoDestinazione;
+	double peso;
+	double costo;
 	
 	Arco(String tipo, int dst,double w, double c){
-		this.tipo = tipo;this.w = w; this.dst = dst; this.c = c;
+		this.tipo = tipo;this.peso = w; this.nodoDestinazione = dst; this.costo = c;
 	}
 }
 /**
@@ -71,17 +72,17 @@ class Arco {
  */
 class Nodo implements Comparable<Nodo>{
 	
-	int index;
-	int pred;
-	double weight;
-	double cost;
+	int indice;
+	int nodoPredecessore;
+	double peso;
+	double costo;
 	
-	Arco mainArc;
+	Arco arcoPrincipale;
 
-	Nodo(int index){ this.index = index; }
+	Nodo(int index){ this.indice = index; }
 	
 	/*
-	 * Arraylist di archi apparteneti al nodo. 
+	 * Arraylist di archi appartenenti al nodo. 
 	 * Necessario lo scorrimento O(n) e l'inserimento O(1)
 	 */
 	ArrayList<Arco> archi = new ArrayList<>(); 
@@ -89,7 +90,7 @@ class Nodo implements Comparable<Nodo>{
 	/*
 	 * Creo un arco che collega questo nodo al nodo "dst", di peso "w" e di costo "c"
 	 */
-	protected void addArc(String tipo, int dst, double w, double c){
+	protected void creaArco(String tipo, int dst, double w, double c){
 		
 		this.archi.add(new Arco(tipo,dst,w,c));
 	}
@@ -101,7 +102,7 @@ class Nodo implements Comparable<Nodo>{
 	@Override
 	public int compareTo(Nodo nodo)
     {
-        return Double.compare(weight, nodo.weight);
+        return Double.compare(peso, nodo.peso);
     }
 }
 
@@ -117,7 +118,9 @@ class SoluzioneEsericizio1{
 	
 	Nodo[] grafo;
 	
-	//prepara il grafo 
+	/*
+	 * Costruttore della classe SoluzioneEsercizio, legge da input il file e prepara il grafo 
+	 */
 	SoluzioneEsericizio1(String nomeFile){
 		
 		try{
@@ -154,7 +157,7 @@ class SoluzioneEsericizio1{
 				else
 					c = 0;
 				
-				grafo[src].addArc(tipo, dst, w, c);
+				grafo[src].creaArco(tipo, dst, w, c);
 			}
 		}
 		
@@ -187,29 +190,37 @@ class SoluzioneEsericizio1{
 	public void dijkstra(boolean tipo){
 		
 		
-		//inizializzazione dei pesi e dei predecessori O(n)
+		//inizializzazione di pesi, predecessori O(n)
+		//e di un Nodo di appoggio
+		Nodo tmp;
+		
 		for(int i=0; i<grafo.length; i++){
 			
-			grafo[i].weight = Double.POSITIVE_INFINITY;
-			grafo[i].pred = -1;
+			grafo[i].peso = Double.POSITIVE_INFINITY;
+			grafo[i].nodoPredecessore = -1;
 			
 		}
 		
-		//implemento una coda di priorità di archi (max heap) ordinata per distanza minore
-		grafo[0].weight = 0;
+		//implemento una coda di priorità di Nodi (max heap) ordinata per distanza minore
+		grafo[0].peso = 0;
 		PriorityQueue<Nodo> Q = new PriorityQueue<>();
 		Q.add(grafo[0]);
 		
 		/*
 		 * Inizio l'iterazione della coda di priorità
 		 * 
-		 * Rimuovo l'elemento Nodo con .weight minore
+		 * oltre alla distinzione dei due casi 
+		 * 
+		 * Rimuovo l'elemento Nodo con peso minore
 		 * e guardo se per ogni arco con origine in U 
 		 * il costo è = 0
 		 * 
 		 * in caso affermativo continuo l'algoritmo
 		 * valutando se è necessario l'aggiornamento 
 		 * del peso degli archi da 0 al nodo V 
+		 * 
+		 * nel secondo caso la procedure è uguale
+		 * permettendo l'utilizzo di ogni arco
 		 * 
 		 * salvo ogni dato nel nodo
 		 */
@@ -220,57 +231,61 @@ class SoluzioneEsericizio1{
 			for( Arco arco : u.archi){
 				
 				//caso solo strade normali, quindi costo = 0
-				if(tipo && arco.c == 0){
+				if(tipo && arco.costo == 0){
 					
-					//caso in cui il nodo di destinazione dell'arco non è ancora stato scoperto
-					if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
+					/*
+					 * in entambi i casi tengo conto della sommatoria del peso, nodo precedente
+					 * e l'arco con cui ci sono arrivato
+					 */
+					if( grafo[arco.nodoDestinazione].peso == Double.POSITIVE_INFINITY){
 						
 						
-						/*
-						 * con queste istruzioni mi salvo:
-						 * 
-						 * peso totale dal nodo 0 al nodo corrente
-						 * nodo da cui parte, e l'arco minore per arrivare al nodo corrente
-						 * 
-						 */
-						grafo[arco.dst].weight = u.weight + arco.w;
-						grafo[arco.dst].pred = u.index;
-						grafo[arco.dst].mainArc = arco;
+						grafo[arco.nodoDestinazione].peso = u.peso + arco.peso;
+						grafo[arco.nodoDestinazione].nodoPredecessore = u.indice;
+						grafo[arco.nodoDestinazione].arcoPrincipale = arco;
 						
-						Q.add(grafo[arco.dst]);
+						//metodo add O(log n)
+						Q.add(grafo[arco.nodoDestinazione]);
 					}
 					
-					//caso in cui si scopre un nuovo percorso minimo
-					else if( u.weight + arco.w < grafo[arco.dst].weight ){
+					else if( u.peso + arco.peso < grafo[arco.nodoDestinazione].peso ){
 						
-						grafo[arco.dst].weight = u.weight + arco.w;
-						grafo[arco.dst].pred = u.index;
-						grafo[arco.dst].mainArc = arco;
+						grafo[arco.nodoDestinazione].peso = u.peso + arco.peso;
+						grafo[arco.nodoDestinazione].nodoPredecessore = u.indice;
+						grafo[arco.nodoDestinazione].arcoPrincipale = arco;
+						
+						//equivalente del metodo decrease key
+						//O(2 log n) = O(log n)
+						if( (tmp=Q.poll()) != null)
+							Q.add(tmp);
 					}
 				}
 				
-				//caso tutte le strade
+				/*
+				 * in questo caso posso avere ogni tipo di strada, 
+				 * quindi mi serve salvare anche il costo
+				 */
 				else if(!tipo){
 					
-					if( grafo[arco.dst].weight == Double.POSITIVE_INFINITY){
+					if( grafo[arco.nodoDestinazione].peso == Double.POSITIVE_INFINITY){
 						
-						grafo[arco.dst].weight = u.weight + arco.w;
-						grafo[arco.dst].pred = u.index;
-						grafo[arco.dst].mainArc = arco;
+						grafo[arco.nodoDestinazione].peso = u.peso + arco.peso;
+						grafo[arco.nodoDestinazione].nodoPredecessore = u.indice;
+						grafo[arco.nodoDestinazione].arcoPrincipale = arco;
+						grafo[arco.nodoDestinazione].costo = u.costo + arco.costo;
 						
-						//salvo la somma totale di costi dal nodo 0 al nodo corrente
-						grafo[arco.dst].cost = u.cost + arco.c;
-						
-						Q.add(grafo[arco.dst]);
+						Q.add(grafo[arco.nodoDestinazione]);
 					}
 					
-					else if( u.weight + arco.w < grafo[arco.dst].weight ){
+					else if( u.peso + arco.peso < grafo[arco.nodoDestinazione].peso ){
 						
-						grafo[arco.dst].weight = u.weight + arco.w;
-						grafo[arco.dst].pred = u.index;
-						grafo[arco.dst].mainArc = arco;
+						grafo[arco.nodoDestinazione].peso = u.peso + arco.peso;
+						grafo[arco.nodoDestinazione].nodoPredecessore = u.indice;
+						grafo[arco.nodoDestinazione].arcoPrincipale = arco;
+						grafo[arco.nodoDestinazione].costo = u.costo + arco.costo;
 						
-						grafo[arco.dst].cost = u.cost + arco.c;
+						if( (tmp=Q.poll()) != null)
+							Q.add(tmp);
 					}
 				}
 			}
@@ -285,10 +300,10 @@ class SoluzioneEsericizio1{
 			System.out.println(result1.get(i));
 		}
 		
-		System.out.println(grafo[grafo.length-1].weight);
+		System.out.println(grafo[grafo.length-1].peso);
 		
 		if(!tipo)
-			System.out.println(grafo[grafo.length-1].cost);
+			System.out.println(grafo[grafo.length-1].costo);
 
 	}
 	
@@ -306,9 +321,9 @@ class SoluzioneEsericizio1{
 		
 		while(currentIndex != 0){
 						
-			result.add(grafo[currentIndex].mainArc.tipo+" "+grafo[currentIndex].pred+" "+currentIndex);
+			result.add(grafo[currentIndex].arcoPrincipale.tipo+" "+grafo[currentIndex].nodoPredecessore+" "+currentIndex);
 			
-			currentIndex = grafo[currentIndex].pred;
+			currentIndex = grafo[currentIndex].nodoPredecessore;
 		}
 		
 		return result;
@@ -318,10 +333,8 @@ class SoluzioneEsericizio1{
 public class Esercizio1 {
 
 	public static void main(String[] args) {
-		
-		String nomeFile = args[0];
 
-		SoluzioneEsericizio1 soluzione = new SoluzioneEsericizio1(nomeFile);
+		SoluzioneEsericizio1 soluzione = new SoluzioneEsericizio1(args[0]);
 		
 		//Solo strade N
 		soluzione.dijkstra(true);

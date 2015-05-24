@@ -42,14 +42,14 @@
  * Salvo ogni Citta dentro un array, e ogni città adiacente dentro una LinkedList<Citta> nell'oggetto
  * 
  * L'algoritmo itera finchè non tutte le città sono coperte
- * Ad ogni giro prendo la città con più città adiacenti non coperte
+ * Ad ogni giro prendo la città con più città adiacenti non coperte, chiamata U
  * 
- * per ogni città adiacente setto la variabile boolean coperto a true
- * 
- * dopo di che faccio un aggiornamento totale di tutte le città inserite nell'array e ri-aggiorno
- * la variabile int che tiene conto delle città vicine
- * 
- * aggiungo un quick-sort alla fine dell'array, eliminando l'ultimo elemento dell'array
+ * controllo tutte le città adiacenti di primo grado ad U (compresa se stessa)
+ * e controllo tutte le città adiacenti di secondo grado ad U
+ * diminuiendo il suo contatore di città adiacenti solo se la città non era stata principalmente coperta
+ *
+ * infine faccio un quick sort sull'array per ri-ottenere 
+ * alla posizione 0 la citta con più città non coperte adiacenti
  * 
  * 
  */
@@ -70,7 +70,7 @@ class Citta implements Comparable<Citta>{
 	double x;
 	double y;
 	
-	int index;
+	int indice;
 	boolean coperto;
 	int numeroAdiacenti;
 	
@@ -84,7 +84,7 @@ class Citta implements Comparable<Citta>{
 		adiacenti = new LinkedList<>();
 		//numeroAdiacenti = 0;
 		
-		this.index = index;
+		this.indice = index;
 		this.coperto = false;
 	}
 	
@@ -92,7 +92,7 @@ class Citta implements Comparable<Citta>{
 		
 		if( Integer.compare(this.numeroAdiacenti, citta.numeroAdiacenti) == 0 )
 			
-			return Integer.compare(this.index, citta.index );
+			return Integer.compare(this.indice, citta.indice );
 		
 		
         return -Integer.compare(this.numeroAdiacenti, citta.numeroAdiacenti);
@@ -138,7 +138,7 @@ class SoluzioneEsericizio4{
 			 * LinkedList
 			 * O(1) inserimento
 			 */
-			for(int i=0; i<numeroCitta; i++){
+			for(int i=0; i<numeroCitta-1; i++){
 				
 				for(int j=i; j<numeroCitta; j++){
 					
@@ -186,27 +186,36 @@ class SoluzioneEsericizio4{
 	public void posizionaAntenne(){
 		
 		ArrayList<Integer> risultati = new ArrayList<>();
-		
-		int cittaNonCoperte = numeroCitta; 
-		
-		//O(n log n)
-		Arrays.sort(citta);
-		
-		while(cittaNonCoperte > 0){
+						
+		while(numeroCitta > 0){
 			
-			//O(1)
+			//esegue un quick sort sull'array
+			//O(n log n)
+			Arrays.sort(citta);
+			
 			Citta u = citta[0];
 			
-			risultati.add(u.index);
+			numeroCitta -= u.numeroAdiacenti;
 			
-			for(Citta cittaAdiacente : u.adiacenti){
+			risultati.add(u.indice);
+			
+			//prendo tutte le città adiacenti di U
+			for(Citta adiacentePrimoGrado : u.adiacenti){
 				
-				cittaAdiacente.coperto = true;
+				//prendo tutte le città adiacenti delle adiacenti di U
+				for(Citta adiacenteSecondoGrado : adiacentePrimoGrado.adiacenti){
+					
+					//se la città adiacente ad U non era stata precedentemente coperta
+					//allora diminuisco il numero di città adiacenti non coperte
+					if(!adiacentePrimoGrado.coperto)
+						
+						adiacenteSecondoGrado.numeroAdiacenti--;
+				}
+				
+				//setto la città adiacente ad U come coperta
+				//la setto dopo così da poter entrare nell'if precedente
+				adiacentePrimoGrado.coperto = true;
 			}
-			
-			cittaNonCoperte -= u.numeroAdiacenti;
-			
-			refreshNumeri();
 		}
 		
 		for(Integer ris : risultati){
@@ -215,54 +224,12 @@ class SoluzioneEsericizio4{
 		}
 		
 	}
-
-	/*
-	 * Metodo che aggiorna il numero delle città adiacenti
-	 * non coperte adiacenti
-	 */
-	private void refreshNumeri(){
-		
-		
-		citta[0] = null;
-		
-		Citta[] tmp = new Citta[citta.length-1];
-		
-		for(int i=0, j=1; i<citta.length-1; i++, j++){
-			
-			tmp[i] = citta[j];
-		}
-		
-		citta = null;
-		
-		//O(n^2)
-		for(Citta c : tmp){
-			
-			c.numeroAdiacenti = 0;
-			
-			if(c.coperto) c.numeroAdiacenti = 0;
-			
-			for(Citta cittaAdiacente : c.adiacenti){
-				
-				if(!cittaAdiacente.coperto)
-					
-					c.numeroAdiacenti++;
-			}
-		}
-		
-		citta = tmp;
-		//quicksort
-		//O(n log n) 
-		Arrays.sort(citta);
-	}
-
 }
 
 public class Esercizio4 {
 
 	public static void main(String[] args) {
 		
-		String nomeFile = args[0];
-		
-		new SoluzioneEsericizio4(nomeFile).posizionaAntenne();
+		new SoluzioneEsericizio4(args[0]).posizionaAntenne();
 	}
 }

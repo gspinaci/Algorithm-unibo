@@ -55,6 +55,9 @@ class SoluzioneEsericizio2{
 	double S[][];
 	int X[][];
 	
+	/*
+	 * Accetta il nome del file 
+	 */
 	SoluzioneEsericizio2(String nomeFile){
 		
 		try{
@@ -245,8 +248,6 @@ public class Esercizio2 {
 	
 	public static void main(String[] args) {
 		
-		String nomeFile = args[0];
-		
-		System.out.println(new SoluzioneEsericizio2(nomeFile).getMaxBondValue());
+		System.out.println(new SoluzioneEsericizio2(args[0]).getMaxBondValue());
 	}
 }

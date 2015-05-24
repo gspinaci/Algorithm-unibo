@@ -28,8 +28,6 @@
  * Algoritmo di Dijkstra funziona solo con archi di peso > 0 in questo caso la distanza euclidea non darà mai un risultato negativo
  * 
  * 
- * Aggiornamento
- * 
  * Completato esercizio, avevo un problema con l'input e l'output ma è stato aggiornato.
  * 
  * 
@@ -55,8 +53,8 @@ class Nodo implements Comparable<Nodo>{
 	//Salvo le coordinate del Nodo corrente e le coordinate del Nodo precedente
 	Coord cord;
 	Coord pred;
-	double h;
 
+	double h;
 	double w;
 	
 	ArrayList<Arco> archi = new ArrayList<>();
@@ -85,20 +83,21 @@ class Nodo implements Comparable<Nodo>{
 	/*
 	 * Metodo che viene utilizzato unicamente in aggiunta alla struttura PriorityQueue
 	 */
+	@Override
 	public int compareTo(Nodo nodo)
     {
         return Double.compare(w, nodo.w);
     }
+
+	public String toString(){
+		
+		return h+" "+w;
+	}
 }
 
 
 /**
- * Classe Arco utilizzata solo per la dot notation 
- * sull'arraylist di archi nella classe Nodo
- * 
- * racchiude informazioni sule coordinate dell'arco di destinazione 
- * e sul peso dell'arco
- *
+ * Classi Arco e Coord utilizzate solo per la dot notation  *
  */
 class Arco{
 	 
@@ -110,12 +109,13 @@ class Arco{
 		this.dst = dst;
 		this.w = w;
 	}
+	
+	public String toString(){
+		
+		return dst+" "+w;
+	}
 }
-/**
- * Classe Coord utilizzata solo per la dot notation
- * e semplificare l'aggiunta di coordinate
- * 
- */
+
 class Coord{
 	
 	int x, y;
@@ -129,6 +129,7 @@ class Coord{
 		return x+" "+y;
 	}
 }
+
 /**
  * Classe Soluzione
  * 
@@ -136,6 +137,8 @@ class Coord{
  * Per ogni nodo crea i suoi archi
  * 
  * Non ho ancora trovato un pattern per rendere più elegante la creazione di archi
+ * 
+ * AGGIORNAMENTO 22/05 pattern trovato
  * 
  * Ritorna il risultato dell'algoritmo di Dijkstra come numero double
  * e scrive il percorso con costo minore per la creazione della strada
@@ -169,7 +172,6 @@ class SoluzioneEsericizio3{
 			
 			reader = new BufferedReader(new FileReader(new File(nomeFile)));
 			
-			
 			cCell = Double.parseDouble(reader.readLine());
 			cHeight = Double.parseDouble(reader.readLine());
 			
@@ -189,9 +191,8 @@ class SoluzioneEsericizio3{
 					H[i][j] = new Nodo(i,j,Double.parseDouble(row[j]));
 				}
 			}
-			
-			//metodo che crea gli archi
-			createArcs();
+
+			creaArchi();
 		}
 		
 		catch(IOException e){
@@ -200,109 +201,75 @@ class SoluzioneEsericizio3{
 		}
 	}
 	
-	
 	/*
-	 * Metodo di creazione degli archi
+	 * Metodo di creazione degli archi V2
 	 * 
-	 * Il metodo è da rifinire, non è elegante, è hard-coded e spaghettiCode
-	 * 
-	 * crea degli archi per ogni nodo, quindi O(n)
-	 * 
-	 * il numero di archi che crea è definito in base alle sue coordinate:
+	 * V1:
+	 * hard-coded e non elegante
 	 * 
 	 * i 4 nodi agli angoli della matrice hanno 2 archi
 	 * gli [(n-2)+(m-2)] * 2 nodi che si trovano ai bordi hanno 3 archi
 	 * tutti gli altri (n-2)*(m-2) nodi interni hanno 4 archi
 	 * 
+	 * Valutazione per ogni singolo caso
+	 * 
+	 * V2:
+	 * Ho trovato un pattern, creo due archi per ogni nodo corrente
+	 * e creo gli archi speculari partenti dai nodi di destinazione
+	 * 
+	 * Dopo il for ho tutta la matrice creata con tutti gli archi, 
+	 * tranne che per l'ultima riga e colonna
+	 * 
+	 * In questo caso scorro semplicemente la riga e la colonna e creo gli archi
+	 * 
+	 * COSTO O(n)
+	 * n -> numero di nodi
 	 */
-	public void createArcs(){
+	private void creaArchi(){
 		
-		for(int i=0; i<rowNum; i++){
+		int lastRow = rowNum-1;
+		int lastCol = colNum-1;
+		
+		//creo tutti gli archi della matrice H[0...n-1;0...m-1]
+		for(int i=0; i<lastRow; i++){
 			
-			for(int j=0; j<colNum; j++){
+			for(int j=0; j<lastCol; j++){
 				
-				//caso dei 4 angoli o dei bordi
-				if( i==0 || j==0 || i==rowNum-1 || j==colNum-1 ){
-					
-					//top-left
-					if(i == 0 && j == 0){
-						
-						H[i][j].addArc(new Coord(i,j+1),Math.pow( H[i][j].h - H[i][j+1].h , 2 ));
-						H[i][j].addArc(new Coord(i+1,j),Math.pow( H[i][j].h - H[i+1][j].h , 2 ));
-					}
-					
-					//top-right
-					else if( i == 0 && j == colNum-1){
-						
-						H[i][j].addArc(new Coord(i,j-1),Math.pow( H[i][j].h - H[i][j-1].h , 2 ));
-						H[i][j].addArc(new Coord(i+1,j),Math.pow( H[i][j].h - H[i+1][j].h , 2 ));
-					}
-					
-					//bottom-left
-					else if( i == rowNum-1 && j == 0 ){
-						
-						H[i][j].addArc(new Coord(i-1,j),Math.pow( H[i][j].h - H[i-1][j].h , 2 ));
-						H[i][j].addArc(new Coord(i,j+1),Math.pow( H[i][j].h - H[i][j+1].h , 2 ));
-					}
-					
-					//bottom-right
-					else if( i == rowNum-1 && j == colNum-1 ){
-						
-						H[i][j].addArc(new Coord(i-1,j),Math.pow( H[i][j].h - H[i-1][j].h , 2 ));
-						H[i][j].addArc(new Coord(i,j-1),Math.pow( H[i][j].h - H[i][j-1].h , 2 ));
-					}
-					
-					
-					//prima riga
-					else if( i==0 ){
-						
-						H[i][j].addArc(new Coord(i,j-1),Math.pow( H[i][j].h - H[i][j-1].h , 2 ));
-						H[i][j].addArc(new Coord(i+1,j),Math.pow( H[i][j].h - H[i+1][j].h , 2 ));
-						H[i][j].addArc(new Coord(i,j+1),Math.pow( H[i][j].h - H[i][j+1].h , 2 ));
-					}
-					
-					//ultima riga
-					else if( i == rowNum-1 ){
-						
-						H[i][j].addArc(new Coord(i,j+1),Math.pow( H[i][j].h - H[i][j+1].h , 2 ));
-						H[i][j].addArc(new Coord(i-1,j),Math.pow( H[i][j].h - H[i-1][j].h , 2 ));
-						H[i][j].addArc(new Coord(i,j-1),Math.pow( H[i][j].h - H[i][j-1].h , 2 ));
-					}
-					
-					//prima colonna
-					else if( j==0 ){
-						
-						H[i][j].addArc(new Coord(i-1,j),Math.pow( H[i][j].h - H[i-1][j].h , 2 ));
-						H[i][j].addArc(new Coord(i,j+1),Math.pow( H[i][j].h - H[i][j+1].h , 2 ));
-						H[i][j].addArc(new Coord(i+1,j),Math.pow( H[i][j].h - H[i+1][j].h , 2 ));
-					}
-					
-					//ultima colonna
-					else if( j==colNum-1 ){
-						
-						H[i][j].addArc(new Coord(i-1,j),Math.pow( H[i][j].h - H[i-1][j].h , 2 ));
-						H[i][j].addArc(new Coord(i,j-1),Math.pow( H[i][j].h - H[i][j-1].h , 2 ));
-						H[i][j].addArc(new Coord(i+1,j),Math.pow( H[i][j].h - H[i+1][j].h , 2 ));
-					}	
-				}
+				double w1 = cHeight * Math.pow( H[i][j].h - H[i][j+1].h ,2);
+				double w2 = cHeight * Math.pow( H[i][j].h - H[i+1][j].h, 2);
+				//nodo vs. destro
+				H[i][j].addArc(new Coord(i,j+1), w1);
 				
-				//caso dei nodi centrali
-				else{
-					
-					//arco vs. nodo superiore
-					H[i][j].addArc(new Coord(i-1,j),Math.pow( H[i][j].h - H[i-1][j].h , 2 ));
-					
-					//arco vs. nodo inferiore
-					H[i][j].addArc(new Coord(i+1,j),Math.pow( H[i][j].h - H[i+1][j].h , 2 ));
-					
-					//arco vs. nodo sinistro
-					H[i][j].addArc(new Coord(i,j-1),Math.pow( H[i][j].h - H[i][j-1].h , 2 ));
-					
-					//arco vs. nodo destro
-					H[i][j].addArc(new Coord(i,j+1),Math.pow( H[i][j].h - H[i][j+1].h , 2 ));					
-				}
+				//nodo vs. inferiore
+				H[i][j].addArc(new Coord(i+1,j), w2);
+				
+				//nodo destro vs. nodo
+				H[i][j+1].addArc(new Coord(i,j), w1);
+				
+				//nodo inferiore vs. nodo
+				H[i+1][j].addArc(new Coord(i,j), w2);
 			}
 		}
+		
+		//creo gli archi dell'ultima riga
+		//ultima riga
+		for(int j=0; j<lastCol;j++){
+			
+			double w = cHeight *  Math.pow( H[lastRow][j].h - H[lastRow][j+1].h , 2 );
+			
+			//arco vs. nodo destro
+			H[lastRow][j].addArc(new Coord(lastRow,j+1),w);
+			H[lastRow][j+1].addArc(new Coord(lastRow,j),w);
+		}
+		
+		//ultima colonna		
+		for(int i=0; i<lastRow; i++){
+			
+			double w = cHeight * Math.pow( H[i][lastCol].h - H[i+1][lastCol].h , 2 );
+			
+			H[i][lastCol].addArc(new Coord(i+1,lastCol),w);
+			H[i+1][lastCol].addArc(new Coord(i,lastCol),w);
+		}		
 	}
 
 	/*
@@ -312,7 +279,9 @@ class SoluzioneEsericizio3{
 	 * Nota:
 	 * Ogni nodo ha M = 2,3,4 archi, verso altri nodi adiacenti
 	 */
-	public double dijkstra(){
+	public void dijkstra(){
+		
+		Nodo tmp;
 		
 		/*
 		 * Inizializzazione dell'algoritmo costo di O(n)
@@ -327,64 +296,60 @@ class SoluzioneEsericizio3{
 			}
 		}
 		
-		/*
-		 * creazione del MinHeap di oggetti di tipo Nodo
-		 */
+		
+		//creazione del MinHeap di oggetti di tipo Nodo
 		PriorityQueue<Nodo> Q = new PriorityQueue<>();
 		
 		H[0][0].w = 0;
 		
 		Q.add(H[0][0]);
 		
-		
 		while( !Q.isEmpty() ){
 			
 			Nodo u = Q.poll();
 			
-			for( Arco arco : u.archi){
+			
+			for(Arco arco : u.archi){
 				
-				Nodo archToNode = H[arco.dst.x][arco.dst.y];
+				Nodo nodoDestinazione = H[arco.dst.x][arco.dst.y];
 				
-				if( archToNode.w == Double.POSITIVE_INFINITY){
+				if(nodoDestinazione.w == Double.POSITIVE_INFINITY){
 					
-					/*
-					 * 
-					 * setto la nuova altezza,
-					 * data dalla somma tra cHeight * quadrato del dislivello tra le celle,
-					 * il costo cCell e il peso del nodo corrente
-					 * 
-					 */
-					archToNode.w = u.w + cCell + ( arco.w * cHeight );
+					nodoDestinazione.w = u.w + arco.w;
+					nodoDestinazione.pred = u.cord;
 					
-					archToNode.pred = u.cord;
-					
-					Q.add(archToNode);
+					//O(log n)
+					Q.add(nodoDestinazione);
 				}
 				
-				else if( u.w + cCell + ( arco.w * cHeight ) < archToNode.w ){
+				else if(u.w + arco.w < nodoDestinazione.w){
 					
-					archToNode.w = u.w + cCell + ( arco.w * cHeight );
-					archToNode.pred = u.cord;
+					nodoDestinazione.w = u.w + arco.w;
+					nodoDestinazione.pred = u.cord;
+					
+					//equivalente del decrease key
+					//O(log n)
+					if( (tmp=Q.poll()) != null)
+						Q.add(tmp);
 				}
 			}
 		}
 		
-		//salvo le coordinate del percorso minimo
+		//scrittura output 
+		
 		ArrayList<Coord> ris = getPath();
-		
-		
+				
 		for(int i=ris.size()-1;i>0;i--){
-			
+						
 			System.out.println(ris.get(i));
 		}
-		
+
 		System.out.println( ( rowNum-1 ) + " " + ( colNum-1 ) );
-		
-		return H[rowNum-1][colNum-1].w;
+		System.out.println((H[rowNum-1][colNum-1].w + cCell * ris.size()));
 	}
 	/*
 	 * Metodo che ricrea il percorso, partendo dal nodo destinazione
-	 * e salve le coordinate del percorso minimo in un arraylist<string>
+	 * e salva le coordinate del percorso minimo in un arraylist<string>
 	 */
 	private ArrayList<Coord> getPath(){
 		
@@ -406,14 +371,7 @@ class SoluzioneEsericizio3{
 public class Esercizio3 {
 
 	public static void main(String[] args) {
-
-		String nomeFile = args[0];
 		
-		SoluzioneEsericizio3 soluzione = new SoluzioneEsericizio3(nomeFile);
-		
-		double ris = soluzione.dijkstra();
-		
-		System.out.println(ris);
+		new SoluzioneEsericizio3(args[0]).dijkstra();
 	}
-
 }
