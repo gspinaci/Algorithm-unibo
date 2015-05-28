@@ -117,7 +117,9 @@ class SoluzioneEsericizio1{
 	
 	Nodo[] grafo;
 	
-	//prepara il grafo 
+	/*
+	 * metodocostruttore, costruisce il grafo partendo dal nome dell'input
+	 */
 	SoluzioneEsericizio1(String nomeFile){
 		
 		try{
@@ -201,6 +203,7 @@ class SoluzioneEsericizio1{
 		//implemento una coda di priorità di Nodi (max heap) ordinata per distanza minore
 		grafo[0].peso = 0;
 		PriorityQueue<Nodo> Q = new PriorityQueue<>();
+
 		Q.add(grafo[0]);
 		
 		/*
@@ -251,8 +254,12 @@ class SoluzioneEsericizio1{
 						grafo[arco.nodoDestinazione].nodoPredecessore = u.indice;
 						grafo[arco.nodoDestinazione].arcoPrincipale = arco;
 						
-						//equivalente del metodo decrease key
-						//O(2 log n) = O(log n)
+						/* equivalente del metodo decrease key
+						 * O(2 log n) = O(log n)
+						 * 
+						 * Praticamente ribilancia lo heap rimuovendo 
+						 * e re-inserendo l'elemento in testa
+						 */
 						if( (tmp=Q.poll()) != null)
 							Q.add(tmp);
 					}
@@ -288,9 +295,9 @@ class SoluzioneEsericizio1{
 			}
 		}
 		
-		//scrittura output
+		//sezione per la scrittura in output
 		
-		ArrayList<String> result1 = printPath(grafo);
+		ArrayList<String> result1 = printPath();
 		
 		for(int i=result1.size()-1; i>=0; i--){
 			
@@ -310,7 +317,7 @@ class SoluzioneEsericizio1{
 	 * 
 	 * tipo src dst
 	 */
-	private ArrayList<String> printPath(Nodo[] grafo){
+	private ArrayList<String> printPath(){
 		
 		ArrayList<String> result = new ArrayList<>();
 		

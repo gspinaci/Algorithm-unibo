@@ -32,6 +32,8 @@
  * elimino l'elemento massimo (con più città adiacenti non coperte) 
  * ne conosco le coordinate della matrice
  * 
+ * ##########################REPORT FINALE###############################################
+ * 
  * DATA -> 21/05/15
  * 
  * Cambiato l'utilizzo di strutture dati,
@@ -46,7 +48,7 @@
  * 
  * controllo tutte le città adiacenti di primo grado ad U (compresa se stessa)
  * e controllo tutte le città adiacenti di secondo grado ad U
- * diminuiendo il suo contatore di città adiacenti solo se la città non era stata principalmente coperta
+ * diminuiendo il suo contatore di città adiacenti solo se la città non era stata precedentemente coperta
  *
  * infine faccio un quick sort sull'array per ri-ottenere 
  * alla posizione 0 la citta con più città non coperte adiacenti

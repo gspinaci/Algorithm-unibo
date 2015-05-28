@@ -49,7 +49,7 @@ class SoluzioneEsericizio2{
 	 * creazione di 3 matrici
 	 * una contiene i valori delle obbligazioni dati da input 
 	 * una che uso per la programmazione dinamica
-	 * l'ultima che uso per tener traccia del percorso di scelta che faccio nel tempo
+	 * l'ultima che uso per tener traccia del percorso di scelta del pacchetto che faccio nel tempo
 	 */
 	double R[][];
 	double S[][];
@@ -84,14 +84,6 @@ class SoluzioneEsericizio2{
 					X[i][j] = 0;
 				}
 			}
-			
-			//salvo la somma del valore massimo che posso avere con queste obbligazioni in input
-			//il metodo richiamato è effettivamente il codice dell'algoritmo dell'esercizio
-			//double somma = getMaxBondValue();
-			
-			//trovo il percorso delle obbligazioni che mi porta, attraverso i mesi t,
-			//ad arrivare al valore somma che mi sono calcolato prima
-			//int[] tmp = getPath();
 		}
 		
 		catch(IOException e){
@@ -148,7 +140,6 @@ class SoluzioneEsericizio2{
 		return max;
 		
 	}
-		
 	
 	/**
 	 * 
